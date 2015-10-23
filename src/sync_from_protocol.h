@@ -97,7 +97,8 @@ struct SyncFromProtocol {
 		if (!table) throw command_error("Expected a table command before hash command");
 		ColumnValues prev_key, last_key;
 		string hash;
-		read_all_arguments(input, prev_key, last_key, hash);
+		read_array(input, prev_key, last_key);
+		read_all_arguments(input, hash);
 		sync_algorithm.check_hash_and_choose_next_range(*table, nullptr, prev_key, last_key, nullptr, hash, target_minimum_block_size, target_maximum_block_size);
 	}
 
@@ -105,7 +106,8 @@ struct SyncFromProtocol {
 		if (!table) throw command_error("Expected a table command before hash command");
 		ColumnValues prev_key, last_key, failed_last_key;
 		string hash;
-		read_all_arguments(input, prev_key, last_key, failed_last_key, hash);
+		read_array(input, prev_key, last_key, failed_last_key);
+		read_all_arguments(input, hash);
 		sync_algorithm.check_hash_and_choose_next_range(*table, nullptr, prev_key, last_key, &failed_last_key, hash, target_minimum_block_size, target_maximum_block_size);
 	}
 
@@ -120,7 +122,8 @@ struct SyncFromProtocol {
 		if (!table) throw command_error("Expected a table command before rows+hash next command");
 		ColumnValues prev_key, last_key, next_key;
 		string hash;
-		read_all_arguments(input, prev_key, last_key, next_key, hash);
+		read_array(input, prev_key, last_key, next_key);
+		read_all_arguments(input, hash);
 		sync_algorithm.check_hash_and_choose_next_range(*table, &prev_key, last_key, next_key, nullptr, hash, target_minimum_block_size, target_maximum_block_size);
 	}
 
@@ -128,16 +131,21 @@ struct SyncFromProtocol {
 		if (!table) throw command_error("Expected a table command before rows+hash fail command");
 		ColumnValues prev_key, last_key, next_key, failed_last_key;
 		string hash;
-		read_all_arguments(input, prev_key, last_key, next_key, failed_last_key, hash);
+		read_array(input, prev_key, last_key, next_key, failed_last_key);
+		read_all_arguments(input, hash);
 		sync_algorithm.check_hash_and_choose_next_range(*table, &prev_key, last_key, next_key, &failed_last_key, hash, target_minimum_block_size, target_maximum_block_size);
 	}
 
 	inline void send_hash_next_command(const Table &table, const ColumnValues &prev_key, const ColumnValues &last_key, const string &hash) {
-		send_command(output, Commands::HASH_NEXT, prev_key, last_key, hash);
+		send_command_begin(output, Commands::HASH_NEXT, prev_key, last_key);
+		send_array(output, hash);
+		send_command_end(output);
 	}
 
 	inline void send_hash_fail_command(const Table &table, const ColumnValues &prev_key, const ColumnValues &last_key, const ColumnValues &failed_last_key, const string &hash) {
-		send_command(output, Commands::HASH_FAIL, prev_key, last_key, failed_last_key, hash);
+		send_command_begin(output, Commands::HASH_FAIL, prev_key, last_key, failed_last_key);
+		send_array(output, hash);
+		send_command_end(output);
 	}
 
 	inline void send_rows_command(const Table &table, const ColumnValues &prev_key, const ColumnValues &last_key) {
@@ -147,13 +155,15 @@ struct SyncFromProtocol {
 	}
 
 	inline void send_rows_and_hash_next_command(const Table &table, const ColumnValues &prev_key, const ColumnValues &last_key, const ColumnValues &next_key, const string &hash) {
-		send_command_begin(output, Commands::ROWS_AND_HASH_NEXT, prev_key, last_key, next_key, hash);
+		send_command_begin(output, Commands::ROWS_AND_HASH_NEXT, prev_key, last_key, next_key);
+		send_array(output, hash);
 		send_rows(table, prev_key, last_key);
 		send_command_end(output);
 	}
 
 	inline void send_rows_and_hash_fail_command(const Table &table, const ColumnValues &prev_key, const ColumnValues &last_key, const ColumnValues &next_key, const ColumnValues &failed_last_key, const string &hash) {
-		send_command_begin(output, Commands::ROWS_AND_HASH_FAIL, prev_key, last_key, next_key, failed_last_key, hash);
+		send_command_begin(output, Commands::ROWS_AND_HASH_FAIL, prev_key, last_key, next_key, failed_last_key);
+		send_array(output, hash);
 		send_rows(table, prev_key, last_key);
 		send_command_end(output);
 	}
