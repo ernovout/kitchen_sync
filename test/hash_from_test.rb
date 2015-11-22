@@ -106,14 +106,14 @@ class HashFromTest < KitchenSync::EndpointTestCase
 
     send_command   Commands::HASH_NEXT, [@keys[0], 1],
                    [hash_of(@rows[1..1]).reverse]
-    expect_command Commands::ROWS_AND_HASH_NEXT, [@keys[0], @keys[1], 1],
-                   [hash_of(@rows[2..2])],
+    expect_command Commands::ROWS_AND_HASH_NEXT, [@keys[0], @keys[1], 2],
+                   [hash_of(@rows[2..3])],
                    @rows[1]
 
     send_command   Commands::HASH_NEXT, [[], 1],
                    [hash_of(@rows[0..0]).reverse]
-    expect_command Commands::ROWS_AND_HASH_NEXT, [[], @keys[0], 1],
-                   [hash_of(@rows[1..1])],
+    expect_command Commands::ROWS_AND_HASH_NEXT, [[], @keys[0], 2],
+                   [hash_of(@rows[1..2])],
                    @rows[0]
   end
 
@@ -172,8 +172,8 @@ class HashFromTest < KitchenSync::EndpointTestCase
 
     send_command   Commands::HASH_NEXT, [@keys[1], 2],
                    [hash_of(@rows[2..3]).reverse]
-    expect_command Commands::ROWS_AND_HASH_NEXT, [@keys[1], @keys[3], 1],
-                   [hash_of(@rows[4..4])],
+    expect_command Commands::ROWS_AND_HASH_NEXT, [@keys[1], @keys[3], 3],
+                   [hash_of(@rows[4..6])],
                    @rows[2],
                    @rows[3]
 
@@ -226,14 +226,14 @@ class HashFromTest < KitchenSync::EndpointTestCase
 
     send_command   Commands::HASH_NEXT, [@keys[0], 1],
                    [hash_of(@rows[1..1]).reverse]
-    expect_command Commands::ROWS_AND_HASH_NEXT, [@keys[0], @keys[1], 1],
-                   [hash_of(@rows[2..2])],
+    expect_command Commands::ROWS_AND_HASH_NEXT, [@keys[0], @keys[1], 2],
+                   [hash_of(@rows[2..3])],
                    @rows[1]
 
     send_command   Commands::HASH_NEXT, [@keys[0], 1],
                    [hash_of(@rows[1..1]).reverse]
-    expect_command Commands::ROWS_AND_HASH_NEXT, [@keys[0], @keys[1], 1],
-                   [hash_of(@rows[2..2])],
+    expect_command Commands::ROWS_AND_HASH_NEXT, [@keys[0], @keys[1], 2],
+                   [hash_of(@rows[2..3])],
                    @rows[1]
   end
 

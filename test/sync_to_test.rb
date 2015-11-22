@@ -82,7 +82,7 @@ class SyncToTest < KitchenSync::EndpointTestCase
     expect_sync_start_commands
     expect_command Commands::OPEN, ["footbl"]
     send_command   Commands::HASH_NEXT, [[], 1], [hash_of(@rows[0..0])]
-    expect_command Commands::ROWS_AND_HASH_NEXT, [[], @keys[0], 1], [hash_of(@rows[1..1])]
+    expect_command Commands::ROWS_AND_HASH_NEXT, [[], @keys[0], 2], [hash_of(@rows[1..2])]
     send_results   Commands::ROWS, # we could combo this and do a rows_and_hash back, but that wouldn't always be possible - we might need a rows PLUS a rows_and_hash (if they next hash they'd given didn't match), and we might need a rows plus a gap plus a hash, so we haven't implemented that
                    [[], @keys[0]],
                    @rows[0]
@@ -109,7 +109,7 @@ class SyncToTest < KitchenSync::EndpointTestCase
     send_command   Commands::HASH_NEXT, [@keys[2], 4], [hash_of(@rows[3..6])]
     expect_command Commands::HASH_FAIL, [@keys[2], 2, @keys[6]], [hash_of([@rows[3], [101, 0, "different"]])]
     send_command   Commands::HASH_FAIL, [@keys[2], 1, @keys[4]], [hash_of(@rows[3..3])]
-    expect_command Commands::ROWS_AND_HASH_NEXT, [@keys[3], @keys[4], 1], [hash_of(@rows[5..5])] # note that the other end has deduced that rows[4] is the problem, so it is requesting that directly rather than giving its hash
+    expect_command Commands::ROWS_AND_HASH_NEXT, [@keys[3], @keys[4], 2], [hash_of(@rows[5..6])] # note that the other end has deduced that rows[4] is the problem, so it is requesting that directly rather than giving its hash
     send_results   Commands::ROWS,
                    [@keys[3], @keys[4]],
                    @rows[4]
@@ -273,7 +273,7 @@ class SyncToTest < KitchenSync::EndpointTestCase
     expect_sync_start_commands
     expect_command Commands::OPEN, ["footbl"]
     send_command   Commands::HASH_NEXT, [[], 1], [hash_of(@rows[0..0])]
-    expect_command Commands::ROWS_AND_HASH_NEXT, [[], @keys[0], 1], [hash_of(@orig_rows[1..1])]
+    expect_command Commands::ROWS_AND_HASH_NEXT, [[], @keys[0], 2], [hash_of(@orig_rows[1..2])]
     send_results   Commands::ROWS,
                    [[], @keys[0]],
                    @rows[0]

@@ -64,8 +64,8 @@ class RowsAndHashFromTest < KitchenSync::EndpointTestCase
     send_command   Commands::ROWS_AND_HASH_NEXT, [[], [2], 1],
                    [hash_of(@rows[1..1]).reverse]
     expect_command Commands::ROWS_AND_HASH_NEXT,
-                   [[], [4], 1],
-                   [hash_of(@rows[2..2])], # row count not doubled, since the last didn't match
+                   [[], [4], 2],
+                   [hash_of(@rows[2..3])], # row count not doubled, since the last didn't match, but grows slowly to allow us to approach target_minimum_block_size
                    @rows[0],
                    @rows[1]
   end
