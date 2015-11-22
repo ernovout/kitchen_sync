@@ -23,15 +23,15 @@ class RowsAndHashFromTest < KitchenSync::EndpointTestCase
 
     send_command   Commands::OPEN, ["footbl"]
     expect_command Commands::HASH_NEXT,
-                   [[], [2]],
+                   [[], 1],
                    [hash_of(@rows[0..0])]
 
-    send_command   Commands::ROWS_AND_HASH_NEXT, [[], [2], [4]],
+    send_command   Commands::ROWS_AND_HASH_NEXT, [[], [2], 1],
                    [hash_of(@rows[1..1])]
     expect_command Commands::ROWS,
                    [[], [2]],
                    @rows[0]
-    expect_command Commands::HASH_NEXT, [[4], [8]],
+    expect_command Commands::HASH_NEXT, [[4], 2],
                    [hash_of(@rows[2..3])] # row count doubled, since the last matched
   end
 
@@ -41,13 +41,13 @@ class RowsAndHashFromTest < KitchenSync::EndpointTestCase
 
     send_command   Commands::OPEN, ["footbl"]
     expect_command Commands::HASH_NEXT,
-                   [[], [2]],
+                   [[], 1],
                    [hash_of(@rows[0..0])]
 
-    send_command   Commands::ROWS_AND_HASH_NEXT, [[], [2], [5]],
+    send_command   Commands::ROWS_AND_HASH_NEXT, [[], [2], 2],
                    [hash_of(@rows[1..2]).reverse]
     expect_command Commands::ROWS_AND_HASH_FAIL,
-                   [[], [2], [4], [5]],
+                   [[], [2], 1, [5]],
                    [hash_of(@rows[1..1])], # row count halved, and failing range end key given
                    @rows[0]
   end
@@ -58,13 +58,13 @@ class RowsAndHashFromTest < KitchenSync::EndpointTestCase
 
     send_command   Commands::OPEN, ["footbl"]
     expect_command Commands::HASH_NEXT,
-                   [[], [2]],
+                   [[], 1],
                    [hash_of(@rows[0..0])]
 
-    send_command   Commands::ROWS_AND_HASH_NEXT, [[], [2], [4]],
+    send_command   Commands::ROWS_AND_HASH_NEXT, [[], [2], 1],
                    [hash_of(@rows[1..1]).reverse]
     expect_command Commands::ROWS_AND_HASH_NEXT,
-                   [[], [4], [5]],
+                   [[], [4], 1],
                    [hash_of(@rows[2..2])], # row count not doubled, since the last didn't match
                    @rows[0],
                    @rows[1]

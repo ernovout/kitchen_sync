@@ -44,7 +44,7 @@ class FilterFromTest < KitchenSync::EndpointTestCase
 
       send_command   Commands::OPEN, ["footbl"]
       expect_command Commands::HASH_NEXT,
-                     [[], [4]],
+                     [[], 1],
                      [hash_of(@filtered_rows[0..0])]
 
       send_command   Commands::ROWS, [[], []]
@@ -79,7 +79,7 @@ class FilterFromTest < KitchenSync::EndpointTestCase
 
       send_command   Commands::OPEN, ["footbl"]
       expect_command Commands::HASH_NEXT,
-                     [[], [2]],
+                     [[], 1],
                      [hash_of(@filtered_rows[0..0])]
 
       send_command   Commands::ROWS, [[], []]
@@ -102,7 +102,7 @@ class FilterFromTest < KitchenSync::EndpointTestCase
       send_handshake_commands
       send_command   Commands::OPEN, ["footbl"]
       expect_command Commands::HASH_NEXT,
-                     [[], [4]],
+                     [[], 1],
                      [hash_of(@filtered_rows[0..0])]
 
       send_command   Commands::ROWS, [[], []]

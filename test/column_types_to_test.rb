@@ -26,7 +26,7 @@ class ColumnTypesToTest < KitchenSync::EndpointTestCase
     expect_sync_start_commands
     expect_command Commands::OPEN, ["misctbl"]
     send_command   Commands::HASH_NEXT,
-                   [[], @keys[0]],
+                   [[], 1],
                    [hash_of(@rows[0..0])]
     expect_command Commands::ROWS,
                    [@keys[0], []]

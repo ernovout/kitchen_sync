@@ -15,13 +15,13 @@ struct SyncAlgorithm {
 		hash_algorithm(hash_algorithm) {
 	}
 
-	void check_hash_and_choose_next_range(const Table &table, const ColumnValues *failed_prev_key, const ColumnValues &prev_key, const ColumnValues &last_key, const ColumnValues *failed_last_key, const string &hash, size_t target_minimum_block_size, size_t target_maximum_block_size) {
+	void check_hash_and_choose_next_range(const Table &table, const ColumnValues *failed_prev_key, const ColumnValues &prev_key, size_t rows_to_hash, const ColumnValues *failed_last_key, const string &hash, size_t target_minimum_block_size, size_t target_maximum_block_size) {
 		if (hash.empty()) throw logic_error("No hash to check given");
-		if (last_key.empty()) throw logic_error("No range end given");
+		if (rows_to_hash < 1) throw logic_error("Told to hash no rows");
 
-		// the other end has given us their hash for the key range (prev_key, last_key], calculate our hash
-		RowHasher hasher(hash_algorithm);
-		client.retrieve_rows(hasher, table, prev_key, last_key);
+		// the other end has given us their hash for the next rows_to_hash rows *after* prev_key, calculate our hash
+		RowHasherAndLastKey hasher(hash_algorithm, table.primary_key_columns);
+		client.retrieve_rows(hasher, table, prev_key, ColumnValues(), rows_to_hash);
 
 		if (hasher.finish() == hash) {
 			if (failed_prev_key) {
@@ -38,11 +38,11 @@ struct SyncAlgorithm {
 				// the world, so at some multiple of that size hashing any bigger blocks results in
 				// minimal gain in the case when data matches and much more time wasted when it doesn't.
 				size_t next_row_count = hasher.size <= target_maximum_block_size/2 ? hasher.row_count*2 : max<size_t>(hasher.row_count*target_maximum_block_size/hasher.size, 1);
-				hash_next_range(table, last_key, next_row_count, target_minimum_block_size);
+				hash_next_range(table, hasher.last_key, next_row_count, target_minimum_block_size);
 			} else {
 				// this range matched but somewhere > last_key & <= failed_last_key there is a mismatch,
 				// so count how many rows we should use to subdivide that range.
-				size_t rows_to_failure = client.count_rows(table, last_key, *failed_last_key);
+				size_t rows_to_failure = client.count_rows(table, hasher.last_key, *failed_last_key);
 
 				// check if there's enough in that range (0 or 1 row(s), or less than target_minimum_block_size
 				// bytes of data) on our side to bother subdividing and trying the shorter range.
@@ -55,23 +55,23 @@ struct SyncAlgorithm {
 				// data transfer - it would really only happen if the next lot are much bigger per row.
 				if (rows_to_failure > 1 && hasher.size > target_minimum_block_size) {
 					// yup, subdivide the range containing the failure, starting at the next row
-					hash_failed_range(table, rows_to_failure/2, nullptr, last_key, *failed_last_key);
+					hash_failed_range(table, rows_to_failure/2, nullptr, hasher.last_key, *failed_last_key);
 				} else {
 					// nope, there's not enough in that range on our side, so it's time to send rows instead of trading hashes
-					rows_and_next_hash(table, last_key, *failed_last_key, !rows_to_failure, target_minimum_block_size);
+					rows_and_next_hash(table, hasher.last_key, *failed_last_key, !rows_to_failure, target_minimum_block_size);
 				}
 			}
 
 		} else if (hasher.row_count > 1 && hasher.size > target_minimum_block_size) {
 			// no match; send the previously-requested rows if any, and subdivide the range starting at the same row
-			hash_failed_range(table, hasher.row_count/2, failed_prev_key, prev_key, last_key);
+			hash_failed_range(table, hasher.row_count/2, failed_prev_key, prev_key, hasher.last_key);
 
 		} else {
 			// rows don't match, and there's not enough in that range (0 or 1 row(s), or less than
 			// target_minimum_block_size bytes of data) on our side to bother subdividing and trying the shorter
 			// range, so it's time to send rows instead of trading hashes.  if the other end requested
 			// preceding rows, combine the request.
-			rows_and_next_hash(table, failed_prev_key ? *failed_prev_key : prev_key, last_key, !hasher.row_count, target_minimum_block_size);
+			rows_and_next_hash(table, failed_prev_key ? *failed_prev_key : prev_key, hasher.last_key, !hasher.row_count, target_minimum_block_size);
 		}
 	}
 
@@ -90,9 +90,9 @@ struct SyncAlgorithm {
 		client.retrieve_rows(hasher, table, prev_key, ColumnValues(), rows_to_hash);
 
 		if (failed_prev_key) {
-			sync_protocol.send_rows_and_hash_fail_command(table, *failed_prev_key, prev_key, hasher.last_key, failed_last_key, hasher.finish().to_string());
+			sync_protocol.send_rows_and_hash_fail_command(table, *failed_prev_key, prev_key, hasher.row_count, failed_last_key, hasher.finish().to_string());
 		} else {
-			sync_protocol.send_hash_fail_command(table, prev_key, hasher.last_key, failed_last_key, hasher.finish().to_string());
+			sync_protocol.send_hash_fail_command(table, prev_key, hasher.row_count, failed_last_key, hasher.finish().to_string());
 		}
 	}
 
@@ -109,7 +109,7 @@ struct SyncAlgorithm {
 			sync_protocol.send_rows_command(table, prev_key, hasher.last_key /* will be [] */);
 		} else {
 			// found some rows, send the new key range and the new hash to the other end
-			sync_protocol.send_hash_next_command(table, prev_key, hasher.last_key, hasher.finish().to_string());
+			sync_protocol.send_hash_next_command(table, prev_key, hasher.row_count, hasher.finish().to_string());
 		}
 	}
 
@@ -148,7 +148,7 @@ struct SyncAlgorithm {
 				sync_protocol.send_rows_command(table, prev_key, hasher.last_key /* will be [] */);
 			} else {
 				// send the new key range and the new hash to the other end, plus the rows for the current range which didn't match
-				sync_protocol.send_rows_and_hash_next_command(table, prev_key, last_key, hasher.last_key, hasher.finish().to_string());
+				sync_protocol.send_rows_and_hash_next_command(table, prev_key, last_key, hasher.row_count, hasher.finish().to_string());
 			}
 		}
 	}

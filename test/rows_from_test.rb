@@ -47,7 +47,7 @@ class RowsFromTest < KitchenSync::EndpointTestCase
 
     send_command   Commands::OPEN, ["footbl"]
     expect_command Commands::HASH_NEXT,
-                   [[], [2]],
+                   [[], 1],
                    [hash_of(@rows[0..0])]
 
     send_command   Commands::ROWS, [[1], [2]]
@@ -101,7 +101,7 @@ class RowsFromTest < KitchenSync::EndpointTestCase
 
     send_command   Commands::OPEN, ["footbl"]
     expect_command Commands::HASH_NEXT,
-                   [[], @keys[0]],
+                   [[], 1],
                    [hash_of(@rows[0..0])]
 
     send_command   Commands::ROWS, [[], @keys[0]]
@@ -131,7 +131,7 @@ class RowsFromTest < KitchenSync::EndpointTestCase
 
     send_command   Commands::OPEN, ["secondtbl"]
     expect_command Commands::HASH_NEXT,
-                   [[], ["aa", 100]],
+                   [[], 1],
                    [hash_of([[100, 100, "aa", 100]])]
 
     send_command   Commands::ROWS, [["aa", 1], ["zz", 2147483647]]
