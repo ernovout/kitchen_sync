@@ -288,7 +288,7 @@ Verbs = Commands.constants.each_with_object({}) {|k, results| results[Commands.c
 module KitchenSync
   class TestCase < Test::Unit::TestCase
     EARLIEST_PROTOCOL_VERSION_SUPPORTED = 6
-    LATEST_PROTOCOL_VERSION_SUPPORTED = 6
+    LATEST_PROTOCOL_VERSION_SUPPORTED = 7
 
     def protocol_version_supported
       LATEST_PROTOCOL_VERSION_SUPPORTED
@@ -361,7 +361,7 @@ module KitchenSync
 
     def expect_handshake_commands
       # checking how protocol versions are handled is covered in protocol_versions_test; here we just need to get past that to get on to the commands we want to test
-      expect_command Commands::PROTOCOL, [protocol_version_supported]
+      expect_command Commands::PROTOCOL, [LATEST_PROTOCOL_VERSION_SUPPORTED]
       send_command   Commands::PROTOCOL, [protocol_version_supported]
 
       # since we haven't asked for multiple workers, we'll always get sent the snapshot-less start command
