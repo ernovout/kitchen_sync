@@ -93,24 +93,28 @@ struct SyncFromProtocol {
 		return table;
 	}
 
+	string read_hash() {
+		string hash;
+		read_array(input, hash);
+		return hash;
+	}
+
 	void handle_hash_next_command(const Table *table) {
 		if (!table) throw command_error("Expected a table command before hash command");
 		ColumnValues prev_key;
 		size_t rows_to_hash;
-		string hash;
 		read_array(input, prev_key, rows_to_hash);
-		read_all_arguments(input, hash);
-		sync_algorithm.check_hash_and_choose_next_range(*table, nullptr, prev_key, rows_to_hash, nullptr, hash, target_minimum_block_size, target_maximum_block_size);
+		sync_algorithm.check_hash_and_choose_next_range(*table, nullptr, prev_key, rows_to_hash, nullptr, target_minimum_block_size, target_maximum_block_size);
+		read_all_arguments(input);
 	}
 
 	void handle_hash_fail_command(const Table *table) {
 		if (!table) throw command_error("Expected a table command before hash command");
 		ColumnValues prev_key, failed_last_key;
 		size_t rows_to_hash;
-		string hash;
 		read_array(input, prev_key, rows_to_hash, failed_last_key);
-		read_all_arguments(input, hash);
-		sync_algorithm.check_hash_and_choose_next_range(*table, nullptr, prev_key, rows_to_hash, &failed_last_key, hash, target_minimum_block_size, target_maximum_block_size);
+		sync_algorithm.check_hash_and_choose_next_range(*table, nullptr, prev_key, rows_to_hash, &failed_last_key, target_minimum_block_size, target_maximum_block_size);
+		read_all_arguments(input);
 	}
 
 	void handle_rows_command(const Table *table) {
@@ -124,20 +128,18 @@ struct SyncFromProtocol {
 		if (!table) throw command_error("Expected a table command before rows+hash next command");
 		ColumnValues prev_key, last_key;
 		size_t rows_to_hash;
-		string hash;
 		read_array(input, prev_key, last_key, rows_to_hash);
-		read_all_arguments(input, hash);
-		sync_algorithm.check_hash_and_choose_next_range(*table, &prev_key, last_key, rows_to_hash, nullptr, hash, target_minimum_block_size, target_maximum_block_size);
+		sync_algorithm.check_hash_and_choose_next_range(*table, &prev_key, last_key, rows_to_hash, nullptr, target_minimum_block_size, target_maximum_block_size);
+		read_all_arguments(input);
 	}
 
 	void handle_rows_and_hash_fail_command(const Table *table) {
 		if (!table) throw command_error("Expected a table command before rows+hash fail command");
 		ColumnValues prev_key, last_key, failed_last_key;
 		size_t rows_to_hash;
-		string hash;
 		read_array(input, prev_key, last_key, rows_to_hash, failed_last_key);
-		read_all_arguments(input, hash);
-		sync_algorithm.check_hash_and_choose_next_range(*table, &prev_key, last_key, rows_to_hash, &failed_last_key, hash, target_minimum_block_size, target_maximum_block_size);
+		sync_algorithm.check_hash_and_choose_next_range(*table, &prev_key, last_key, rows_to_hash, &failed_last_key, target_minimum_block_size, target_maximum_block_size);
+		read_all_arguments(input);
 	}
 
 	inline void send_hash_next_command(const Table &table, const ColumnValues &prev_key, size_t rows_to_hash, const string &hash) {

@@ -15,13 +15,16 @@ struct SyncAlgorithm {
 		hash_algorithm(hash_algorithm) {
 	}
 
-	void check_hash_and_choose_next_range(const Table &table, const ColumnValues *failed_prev_key, const ColumnValues &prev_key, size_t rows_to_hash, const ColumnValues *failed_last_key, const string &hash, size_t target_minimum_block_size, size_t target_maximum_block_size) {
-		if (hash.empty()) throw logic_error("No hash to check given");
+	void check_hash_and_choose_next_range(const Table &table, const ColumnValues *failed_prev_key, const ColumnValues &prev_key, size_t rows_to_hash, const ColumnValues *failed_last_key, size_t target_minimum_block_size, size_t target_maximum_block_size) {
 		if (rows_to_hash < 1) throw logic_error("Told to hash no rows");
 
 		// the other end has given us their hash for the next rows_to_hash rows *after* prev_key, calculate our hash
 		RowHasherAndLastKey hasher(hash_algorithm, table.primary_key_columns);
 		client.retrieve_rows(hasher, table, prev_key, ColumnValues(), rows_to_hash);
+
+		// meanwhile the other end has been doing the same thing simultaneously, which we can now receive
+		string hash(sync_protocol.read_hash());
+		if (hash.empty()) throw logic_error("No hash to check given");
 
 		if (hasher.finish() == hash) {
 			if (failed_prev_key) {
